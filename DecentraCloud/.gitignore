@@ -1,0 +1,30 @@
+# .NET
+bin/
+obj/
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio
+.vs/
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Truffle
+build/
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.Python
+env/
+venv/
+
+# Kubernetes
+.kube/

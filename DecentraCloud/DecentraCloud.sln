@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34728.123
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DecentraCloud.API", "DecentraCloud.API\DecentraCloud.API.csproj", "{DB3853A8-38AE-4CB0-8915-187E44EFECE6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DB3853A8-38AE-4CB0-8915-187E44EFECE6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DB3853A8-38AE-4CB0-8915-187E44EFECE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DB3853A8-38AE-4CB0-8915-187E44EFECE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DB3853A8-38AE-4CB0-8915-187E44EFECE6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A0A2B5FF-8C8E-472E-B1FA-2D1489FB15C7}
+	EndGlobalSection
+EndGlobal

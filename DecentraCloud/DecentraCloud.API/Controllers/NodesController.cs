@@ -1,0 +1,79 @@
+﻿using DecentraCloud.API.DTOs;
+using DecentraCloud.API.Helpers;
+using DecentraCloud.API.Interfaces.RepositoryInterfaces;
+using DecentraCloud.API.Interfaces.ServiceInterfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Security.Claims;
+using System.Threading.Tasks;
+
+namespace DecentraCloud.API.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class NodesController : ControllerBase
+    {
+        private readonly INodeService _nodeService;
+        private readonly TokenHelper _tokenHelper;
+        private readonly INodeRepository _nodeRepository;
+
+        public NodesController(INodeService nodeService, TokenHelper tokenHelper, INodeRepository nodeRepository)
+        {
+            _nodeService = nodeService;
+            _tokenHelper = tokenHelper;
+            _nodeRepository = nodeRepository;
+        }
+
+        [HttpPost("register")]
+        public async Task<IActionResult> RegisterNode([FromBody] NodeRegistrationDto nodeRegistrationDto)
+        {
+            try
+            {
+                var node = await _nodeService.RegisterNode(nodeRegistrationDto);
+                return Ok(node);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> LoginNode([FromBody] NodeLoginDto nodeLoginDto)
+        {
+            try
+            {
+                var token = await _nodeService.LoginNode(nodeLoginDto);
+                return Ok(new { token });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("status")]
+        [Authorize]
+        public async Task<IActionResult> UpdateNodeStatus([FromBody] NodeStatusDto nodeStatusDto)
+        {
+            var result = await _nodeService.UpdateNodeStatus(nodeStatusDto);
+
+            if (!result)
+            {
+                return BadRequest(new { message = "Failed to update node status." });
+            }
+
+            return Ok(new { message = "Node status updated successfully." });
+        }
+
+        [HttpGet("all")]
+        [Authorize]
+        public async Task<IActionResult> GetAllNodes()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var nodes = await _nodeService.GetNodesByUser(userId);
+            return Ok(nodes);
+        }
+    }
+}
