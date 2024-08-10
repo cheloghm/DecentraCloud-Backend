@@ -50,11 +50,16 @@ namespace DecentraCloud.API.Services
                 throw new Exception("Node already exists. Please login.");
             }
 
+            var region = RegionHelper.DetermineRegion(nodeRegistrationDto.Country, nodeRegistrationDto.City);
+
             var node = new Node
             {
                 UserId = user.Id,
                 Storage = nodeRegistrationDto.Storage,
                 NodeName = nodeRegistrationDto.NodeName,
+                Country = nodeRegistrationDto.Country,
+                City = nodeRegistrationDto.City,
+                Region = region, // Assign region
                 Password = _encryptionHelper.HashPassword(nodeRegistrationDto.Password)
             };
 
