@@ -68,22 +68,32 @@ namespace DecentraCloud.API.Repositories
 
         public async Task<bool> UploadFileToNode(FileUploadDto fileUploadDto, Node node)
         {
-            var httpClient = CreateHttpClient();
-            var url = $"{node.Endpoint}/storage/upload";
-            var content = new MultipartFormDataContent();
-            var fileContent = new ByteArrayContent(fileUploadDto.Data);
-            content.Add(fileContent, "file", fileUploadDto.Filename);
-            content.Add(new StringContent(fileUploadDto.UserId), "userId");
-            content.Add(new StringContent(fileUploadDto.Filename), "filename");
-
-            var request = new HttpRequestMessage(HttpMethod.Post, url)
+            try
             {
-                Content = content
-            };
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", node.Token);
+                var httpClient = CreateHttpClient();
+                var url = $"{node.Endpoint}/storage/upload";
+                var content = new MultipartFormDataContent
+                {
+                    { new ByteArrayContent(fileUploadDto.Data), "file", fileUploadDto.Filename },
+                    { new StringContent(fileUploadDto.UserId), "userId" },
+                    { new StringContent(fileUploadDto.Filename), "filename" }
+                };
 
-            var response = await httpClient.SendAsync(request);
-            return response.IsSuccessStatusCode;
+                var request = new HttpRequestMessage(HttpMethod.Post, url)
+                {
+                    Content = content
+                };
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", node.Token);
+
+                var response = await httpClient.SendAsync(request);
+                return response.IsSuccessStatusCode;
+            }
+            catch (HttpRequestException ex)
+            {
+                // Log and handle the exception
+                Console.WriteLine($"HTTP Request failed: {ex.Message}");
+                return false;
+            }
         }
 
         public async Task<byte[]> DownloadFileFromNode(string userId, string fileId, Node node)

@@ -28,11 +28,17 @@ namespace DecentraCloud.API.Services
 
         private HttpClient CreateHttpClient()
         {
-            return new HttpClient(new HttpClientHandler
+            var handler = new HttpClientHandler
             {
-                ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
-            });
+                ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) => true
+            };
+
+            return new HttpClient(handler)
+            {
+                Timeout = TimeSpan.FromMinutes(10) // Set a longer timeout
+            };
         }
+
 
         public async Task<Node> RegisterNode(NodeRegistrationDto nodeRegistrationDto)
         {
