@@ -46,15 +46,19 @@ namespace DecentraCloud.API.Middlewares
                 }, out SecurityToken validatedToken);
 
                 var jwtToken = (JwtSecurityToken)validatedToken;
-                var nodeId = jwtToken.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
+                var nodeId = jwtToken.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value;
 
-                context.Items["Node"] = nodeId;
+                if (!string.IsNullOrEmpty(nodeId))
+                {
+                    context.Items["Node"] = nodeId;
+                }
             }
             catch
             {
-                // do nothing if jwt validation fails
-                // node won't be attached to context so request won't have access to secure routes
+                // Do nothing if JWT validation fails
+                // Node won't be attached to context, so the request won't have access to secure routes
             }
         }
+
     }
 }
