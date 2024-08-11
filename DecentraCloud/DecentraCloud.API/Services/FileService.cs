@@ -26,7 +26,7 @@ namespace DecentraCloud.API.Services
 
         private string GetMimeType(string filename)
         {
-            return MimeTypesMap.GetMimeType(filename);
+            return MimeTypeHelper.GetMimeType(filename);
         }
 
         public async Task<FileOperationResult> UploadFile(FileUploadDto fileUploadDto)
