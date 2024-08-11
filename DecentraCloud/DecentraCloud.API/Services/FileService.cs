@@ -49,7 +49,7 @@ namespace DecentraCloud.API.Services
                 Filename = fileUploadDto.Filename, // Original filename
                 NodeId = fileUploadDto.NodeId,
                 Size = fileUploadDto.Data.Length,
-                MimeType = GetMimeType(fileUploadDto.Filename), // Set MIME type
+                MimeType = MimeTypeHelper.GetMimeType(fileUploadDto.Filename), // Set MIME type using helper
                 DateAdded = DateTime.UtcNow
             };
             await _fileRepository.AddFileRecord(fileRecord);
@@ -68,9 +68,14 @@ namespace DecentraCloud.API.Services
             if (result)
             {
                 await _userRepository.UpdateUserStorageUsage(fileUploadDto.UserId, fileUploadDto.Data.Length);
+                return new FileOperationResult { Success = true, Message = "File uploaded successfully" };
             }
-
-            return new FileOperationResult { Success = result, Message = result ? "File uploaded successfully" : "File upload failed" };
+            else
+            {
+                // If upload to storage node fails, delete the file record from the database
+                await _fileRepository.DeleteFileRecord(fileUploadDto.UserId, fileRecord.Filename);
+                return new FileOperationResult { Success = false, Message = "File upload failed and record deleted." };
+            }
         }
 
         public async Task<IEnumerable<FileRecord>> GetAllFiles(string userId)
