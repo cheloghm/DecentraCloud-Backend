@@ -39,6 +39,66 @@ namespace DecentraCloud.API.Services
             };
         }
 
+        public async Task<bool> PingNode(string nodeId)
+        {
+            var node = await _nodeRepository.GetNodeById(nodeId);
+            if (node == null || string.IsNullOrEmpty(node.Endpoint) || !node.IsOnline)
+            {
+                return false;
+            }
+
+            var httpClient = CreateHttpClient();
+            var url = $"{node.Endpoint}/ping";
+            var response = await httpClient.GetAsync(url);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> EnsureNodeIsOnline(string nodeId)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                if (await PingNode(nodeId))
+                {
+                    return true;
+                }
+            }
+
+            // Mark the node as offline if ping fails 3 times
+            var node = await _nodeRepository.GetNodeById(nodeId);
+            if (node != null)
+            {
+                node.IsOnline = false;
+                node.Endpoint = null;
+                node.Token = null;
+                node.Downtime.Add(new Dictionary<string, object>
+            {
+                { "Reason", "Ping failed 3 times" },
+                { "Timestamp", DateTime.UtcNow }
+            });
+
+                await _nodeRepository.UpdateNode(node);
+            }
+
+            return false;
+        }
+
+        public async Task<bool> UpdateNodeUptime(string nodeId)
+        {
+            var node = await _nodeRepository.GetNodeById(nodeId);
+            if (node == null) return false;
+
+            node.Uptime.Add(DateTime.UtcNow);
+            return await _nodeRepository.UpdateNode(node);
+        }
+
 
         public async Task<Node> RegisterNode(NodeRegistrationDto nodeRegistrationDto)
         {
@@ -62,10 +122,12 @@ namespace DecentraCloud.API.Services
             {
                 UserId = user.Id,
                 Storage = nodeRegistrationDto.Storage,
+                AllocatedFileStorage = nodeRegistrationDto.Storage / 2,
+                AllocatedDeploymentStorage = nodeRegistrationDto.Storage / 2,
                 NodeName = nodeRegistrationDto.NodeName,
                 Country = nodeRegistrationDto.Country,
                 City = nodeRegistrationDto.City,
-                Region = region, // Assign region
+                Region = region,
                 Password = _encryptionHelper.HashPassword(nodeRegistrationDto.Password)
             };
 

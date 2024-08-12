@@ -11,10 +11,18 @@ namespace DecentraCloud.API.Models
         public string Id { get; set; }
         public string UserId { get; set; }
         public int Storage { get; set; }
-        public long Uptime { get; set; }
-        public long Downtime { get; set; }
-        public StorageStats StorageStats { get; set; }
-        public string CauseOfDowntime { get; set; }
+
+        [BsonElement("allocatedFileStorage")]
+        public double AllocatedFileStorage { get; set; }
+
+        [BsonElement("allocatedDeploymentStorage")]
+        public double AllocatedDeploymentStorage { get; set; }
+
+        [BsonElement("uptime")]
+        public List<DateTime> Uptime { get; set; } = new List<DateTime>();
+
+        [BsonElement("downtime")]
+        public List<Dictionary<string, object>> Downtime { get; set; } = new List<Dictionary<string, object>>();
         public string Token { get; set; }
         public string Endpoint { get; set; }
         public string NodeName { get; set; }
