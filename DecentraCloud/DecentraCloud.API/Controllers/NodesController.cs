@@ -75,5 +75,20 @@ namespace DecentraCloud.API.Controllers
             var nodes = await _nodeService.GetNodesByUser(userId);
             return Ok(nodes);
         }
+
+        // New PingNode endpoint
+        [HttpGet("ping/{nodeId}")]
+        [Authorize]
+        public async Task<IActionResult> PingNode(string nodeId)
+        {
+            var node = await _nodeService.GetNodeById(nodeId);
+            if (node == null)
+            {
+                return NotFound(new { message = "Node not found." });
+            }
+
+            var isOnline = await _nodeService.PingNode(nodeId);
+            return Ok(new { nodeId, isOnline });
+        }
     }
 }
