@@ -136,8 +136,16 @@ namespace DecentraCloud.API.Services
             {
                 UserId = user.Id,
                 Storage = nodeRegistrationDto.Storage,
-                AllocatedFileStorage = nodeRegistrationDto.Storage / 2,
-                AllocatedDeploymentStorage = nodeRegistrationDto.Storage / 2,
+                AllocatedFileStorage = new StorageStats
+                {
+                    UsedStorage = 0,
+                    AvailableStorage = nodeRegistrationDto.Storage / 2
+                },
+                AllocatedDeploymentStorage = new StorageStats
+                {
+                    UsedStorage = 0,
+                    AvailableStorage = nodeRegistrationDto.Storage / 2
+                },
                 NodeName = nodeRegistrationDto.NodeName,
                 Country = nodeRegistrationDto.Country,
                 City = nodeRegistrationDto.City,

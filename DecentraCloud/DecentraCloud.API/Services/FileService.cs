@@ -38,7 +38,7 @@ namespace DecentraCloud.API.Services
             }
 
             // Check if there is enough available storage
-            if (node.StorageStats.AvailableStorage < fileUploadDto.Data.Length)
+            if (node.AllocatedFileStorage.AvailableStorage < fileUploadDto.Data.Length)
             {
                 return new FileOperationResult { Success = false, Message = "Not enough available storage on node." };
             }
@@ -75,8 +75,8 @@ namespace DecentraCloud.API.Services
                 await _userRepository.UpdateUserStorageUsage(fileUploadDto.UserId, fileUploadDto.Data.Length);
 
                 // Update node storage stats
-                node.StorageStats.UsedStorage += fileUploadDto.Data.Length;
-                node.StorageStats.AvailableStorage -= fileUploadDto.Data.Length;
+                node.AllocatedFileStorage.UsedStorage += fileUploadDto.Data.Length;
+                node.AllocatedFileStorage.AvailableStorage -= fileUploadDto.Data.Length;
                 await _nodeService.UpdateNode(node);
 
                 await _nodeService.UpdateNodeUptime(node.Id);
@@ -125,13 +125,12 @@ namespace DecentraCloud.API.Services
             await _userRepository.UpdateUser(user);
 
             // Update node storage stats
-            node.StorageStats.UsedStorage -= fileRecord.Size;
-            node.StorageStats.AvailableStorage += fileRecord.Size;
+            node.AllocatedFileStorage.UsedStorage -= fileRecord.Size;
+            node.AllocatedFileStorage.AvailableStorage += fileRecord.Size;
             await _nodeService.UpdateNode(node);
 
             return true;
         }
-
 
         public async Task<IEnumerable<FileRecord>> GetAllFiles(string userId)
         {
