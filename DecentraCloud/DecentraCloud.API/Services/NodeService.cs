@@ -146,19 +146,23 @@ namespace DecentraCloud.API.Services
 
             var region = RegionHelper.DetermineRegion(nodeRegistrationDto.Country, nodeRegistrationDto.City);
 
+            // Convert the storage from GB to bytes
+            long storageInBytes = nodeRegistrationDto.Storage * 1024L * 1024L * 1024L;
+            long halfStorageInBytes = storageInBytes / 2;
+
             var node = new Node
             {
                 UserId = user.Id,
-                Storage = nodeRegistrationDto.Storage,
+                Storage = storageInBytes,
                 AllocatedFileStorage = new StorageStats
                 {
                     UsedStorage = 0,
-                    AvailableStorage = nodeRegistrationDto.Storage / 2
+                    AvailableStorage = halfStorageInBytes
                 },
                 AllocatedDeploymentStorage = new StorageStats
                 {
                     UsedStorage = 0,
-                    AvailableStorage = nodeRegistrationDto.Storage / 2
+                    AvailableStorage = halfStorageInBytes
                 },
                 NodeName = nodeRegistrationDto.NodeName,
                 Country = nodeRegistrationDto.Country,
@@ -168,7 +172,7 @@ namespace DecentraCloud.API.Services
                 StorageStats = new StorageStats
                 {
                     UsedStorage = 0,
-                    AvailableStorage = nodeRegistrationDto.Storage
+                    AvailableStorage = storageInBytes
                 }
             };
 

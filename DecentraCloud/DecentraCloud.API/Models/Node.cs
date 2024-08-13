@@ -10,7 +10,7 @@ namespace DecentraCloud.API.Models
         [BsonRepresentation(BsonType.ObjectId)]
         public string Id { get; set; }
         public string UserId { get; set; }
-        public int Storage { get; set; }
+        public long Storage { get; set; }
 
         [BsonElement("allocatedFileStorage")]
         public StorageStats AllocatedFileStorage { get; set; } = new StorageStats();
