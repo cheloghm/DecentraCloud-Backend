@@ -9,9 +9,32 @@
                 "United States", new Dictionary<string, string>
                 {
                     { "New York", "us-east-1" },
+                    { "NY", "us-east-1" },
+                    { "NYC", "us-east-1" },
                     { "Washington D.C.", "us-east-1" },
+                    { "DC", "us-east-1" },
                     { "San Francisco", "us-west-1" },
+                    { "SF", "us-west-1" },
                     { "Los Angeles", "us-west-2" },
+                    { "LA", "us-west-2" },
+                    { "Chicago", "us-central-1" },
+                    { "Dallas", "us-central-1" },
+                    { "Miami", "us-south-1" },
+                    { "Seattle", "us-west-2" }
+                }
+            },
+            {
+                "USA", new Dictionary<string, string>
+                {
+                    { "New York", "us-east-1" },
+                    { "NY", "us-east-1" },
+                    { "NYC", "us-east-1" },
+                    { "Washington D.C.", "us-east-1" },
+                    { "DC", "us-east-1" },
+                    { "San Francisco", "us-west-1" },
+                    { "SF", "us-west-1" },
+                    { "Los Angeles", "us-west-2" },
+                    { "LA", "us-west-2" },
                     { "Chicago", "us-central-1" },
                     { "Dallas", "us-central-1" },
                     { "Miami", "us-south-1" },
@@ -22,9 +45,14 @@
                 "US", new Dictionary<string, string>
                 {
                     { "New York", "us-east-1" },
+                    { "NY", "us-east-1" },
+                    { "NYC", "us-east-1" },
                     { "Washington D.C.", "us-east-1" },
+                    { "DC", "us-east-1" },
                     { "San Francisco", "us-west-1" },
+                    { "SF", "us-west-1" },
                     { "Los Angeles", "us-west-2" },
+                    { "LA", "us-west-2" },
                     { "Chicago", "us-central-1" },
                     { "Dallas", "us-central-1" },
                     { "Miami", "us-south-1" },
@@ -70,7 +98,19 @@
                 }
             },
             {
+                "Great Britain", new Dictionary<string, string>
+                {
+                    { "London", "eu-west-2" }
+                }
+            },
+            {
                 "GB", new Dictionary<string, string>
+                {
+                    { "London", "eu-west-2" }
+                }
+            },
+            {
+                "UK", new Dictionary<string, string>
                 {
                     { "London", "eu-west-2" }
                 }
