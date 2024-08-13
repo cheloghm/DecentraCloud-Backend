@@ -25,6 +25,25 @@ namespace DecentraCloud.API.Controllers
             _nodeRepository = nodeRepository;
         }
 
+        [HttpPost("verify")]
+        public async Task<IActionResult> VerifyNode([FromBody] NodeVerificationDto nodeVerificationDto)
+        {
+            try
+            {
+                var nodeExists = await _nodeService.VerifyNode(nodeVerificationDto.Email, nodeVerificationDto.NodeName);
+                if (nodeExists)
+                {
+                    return BadRequest(new { message = "Node already exists. Please authenticate or choose a different name." });
+                }
+
+                return Ok(new { message = "Node name is available." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+            }
+        }
+
         [HttpPost("register")]
         public async Task<IActionResult> RegisterNode([FromBody] NodeRegistrationDto nodeRegistrationDto)
         {

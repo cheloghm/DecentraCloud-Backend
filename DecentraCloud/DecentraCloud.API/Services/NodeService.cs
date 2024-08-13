@@ -290,5 +290,19 @@ namespace DecentraCloud.API.Services
             var random = new Random();
             return nodes.ElementAt(random.Next(nodes.Count()));
         }
+
+        public async Task<bool> VerifyNode(string userEmail, string nodeName)
+        {
+            var user = await _userRepository.GetUserByEmail(userEmail);
+            if (user == null)
+            {
+                throw new Exception("User not found.");
+            }
+
+            var existingNode = (await _nodeRepository.GetNodesByUser(user.Id))
+                .FirstOrDefault(n => n.NodeName == nodeName);
+
+            return existingNode != null;
+        }
     }
 }
