@@ -33,7 +33,7 @@ namespace DecentraCloud.API.Controllers
                 var nodeExists = await _nodeService.VerifyNode(nodeVerificationDto.Email, nodeVerificationDto.NodeName);
                 if (nodeExists)
                 {
-                    return BadRequest(new { message = "Node already exists. Please authenticate or register on a new divce." });
+                    return BadRequest(new { message = "Node already exists. Please authenticate or choose a different name." });
                 }
 
                 return Ok(new { message = "Node name is available." });
