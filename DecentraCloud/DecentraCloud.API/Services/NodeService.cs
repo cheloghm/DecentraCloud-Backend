@@ -42,13 +42,17 @@ namespace DecentraCloud.API.Services
         public async Task<bool> PingNode(string nodeId)
         {
             var node = await _nodeRepository.GetNodeById(nodeId);
-            if (node == null)
+            if (node == null || string.IsNullOrEmpty(node.Token))
             {
                 return false;
             }
 
             var httpClient = CreateHttpClient();
-            var url = $"{node.Endpoint}/ping";
+            var url = $"{node.Endpoint}/storage/ping";
+
+            // Add the authorization header
+            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", node.Token);
+
             var response = await httpClient.GetAsync(url);
 
             if (response.IsSuccessStatusCode)
