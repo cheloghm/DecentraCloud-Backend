@@ -31,10 +31,11 @@ namespace DecentraCloud.API.Services
 
         public async Task<FileOperationResult> UploadFile(FileUploadDto fileUploadDto)
         {
-            var node = await _nodeService.GetNodeById(fileUploadDto.NodeId);
+            // Get a random online node for the file upload
+            var node = await _nodeService.GetRandomOnlineNode();
             if (node == null || !await _nodeService.EnsureNodeIsOnline(node.Id))
             {
-                return new FileOperationResult { Success = false, Message = "Node is offline or unavailable." };
+                return new FileOperationResult { Success = false, Message = "No available nodes or node is offline." };
             }
 
             // Check if there is enough available storage
@@ -51,7 +52,7 @@ namespace DecentraCloud.API.Services
             {
                 UserId = fileUploadDto.UserId,
                 Filename = fileUploadDto.Filename,
-                NodeId = fileUploadDto.NodeId,
+                NodeId = node.Id,  // Use the node ID of the selected random online node
                 Size = fileUploadDto.Data.Length,
                 MimeType = MimeTypeHelper.GetMimeType(fileUploadDto.Filename),
                 DateAdded = DateTime.UtcNow
@@ -66,7 +67,7 @@ namespace DecentraCloud.API.Services
                 UserId = fileUploadDto.UserId,
                 Filename = fileId,
                 Data = fileUploadDto.Data,
-                NodeId = fileUploadDto.NodeId
+                NodeId = node.Id  // Use the node ID of the selected random online node
             }, node);
 
             if (result)
@@ -84,6 +85,7 @@ namespace DecentraCloud.API.Services
             }
             else
             {
+                // If the upload fails, delete the file record from the database
                 await _fileRepository.DeleteFileRecord(fileUploadDto.UserId, fileRecord.Filename);
                 return new FileOperationResult { Success = false, Message = "File upload failed and record deleted." };
             }

@@ -280,17 +280,6 @@ namespace DecentraCloud.API.Services
             return await _nodeRepository.DeleteNode(nodeId);
         }
 
-        public async Task<Node> GetRandomNode()
-        {
-            var nodes = await _nodeRepository.GetAllNodes();
-            if (nodes == null || !nodes.Any())
-            {
-                throw new Exception("No available nodes found.");
-            }
-            var random = new Random();
-            return nodes.ElementAt(random.Next(nodes.Count()));
-        }
-
         public async Task<bool> VerifyNode(string userEmail, string nodeName)
         {
             var user = await _userRepository.GetUserByEmail(userEmail);
