@@ -51,14 +51,7 @@ namespace DecentraCloud.API.Services
             var url = $"{node.Endpoint}/ping";
             var response = await httpClient.GetAsync(url);
 
-            if (response.IsSuccessStatusCode)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return response.IsSuccessStatusCode;
         }
 
         public async Task<bool> EnsureNodeIsOnline(string nodeId)
@@ -99,6 +92,25 @@ namespace DecentraCloud.API.Services
             return await _nodeRepository.UpdateNode(node);
         }
 
+        public async Task<bool> UpdateNodeStatus(NodeStatusDto nodeStatusDto)
+        {
+            var node = await _nodeRepository.GetNodeById(nodeStatusDto.NodeId);
+            if (node == null)
+            {
+                return false;
+            }
+
+            node.Uptime = nodeStatusDto.Uptime;
+            node.Downtime = nodeStatusDto.Downtime;
+            node.StorageStats = new StorageStats
+            {
+                UsedStorage = nodeStatusDto.StorageStats.UsedStorage,
+                AvailableStorage = nodeStatusDto.StorageStats.AvailableStorage
+            };
+            node.IsOnline = nodeStatusDto.IsOnline;
+
+            return await _nodeRepository.UpdateNode(node);
+        }
 
         public async Task<Node> RegisterNode(NodeRegistrationDto nodeRegistrationDto)
         {
@@ -158,27 +170,6 @@ namespace DecentraCloud.API.Services
             await _nodeRepository.UpdateNode(node);
 
             return token;
-        }
-
-        public async Task<bool> UpdateNodeStatus(NodeStatusDto nodeStatusDto)
-        {
-            var node = await _nodeRepository.GetNodeById(nodeStatusDto.NodeId);
-            if (node == null)
-            {
-                return false;
-            }
-
-            node.Uptime = nodeStatusDto.Uptime;
-            node.Downtime = nodeStatusDto.Downtime;
-            node.StorageStats = new StorageStats
-            {
-                UsedStorage = nodeStatusDto.StorageStats.UsedStorage,
-                AvailableStorage = nodeStatusDto.StorageStats.AvailableStorage
-            };
-            node.IsOnline = nodeStatusDto.IsOnline;
-            node.CauseOfDowntime = nodeStatusDto.CauseOfDowntime;
-
-            return await _nodeRepository.UpdateNode(node);
         }
 
         public async Task<long> GetFileSize(string nodeId, string filename)

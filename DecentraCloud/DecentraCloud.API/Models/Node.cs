@@ -13,16 +13,17 @@ namespace DecentraCloud.API.Models
         public int Storage { get; set; }
 
         [BsonElement("allocatedFileStorage")]
-        public double AllocatedFileStorage { get; set; }
+        public StorageStats AllocatedFileStorage { get; set; } = new StorageStats();
 
         [BsonElement("allocatedDeploymentStorage")]
-        public double AllocatedDeploymentStorage { get; set; }
+        public StorageStats AllocatedDeploymentStorage { get; set; } = new StorageStats();
 
         [BsonElement("uptime")]
         public List<DateTime> Uptime { get; set; } = new List<DateTime>();
 
         [BsonElement("downtime")]
         public List<Dictionary<string, object>> Downtime { get; set; } = new List<Dictionary<string, object>>();
+
         public string Token { get; set; }
         public string Endpoint { get; set; }
         public string NodeName { get; set; }
@@ -32,4 +33,5 @@ namespace DecentraCloud.API.Models
         public string City { get; set; }
         public string Region { get; set; }
     }
+
 }

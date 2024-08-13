@@ -121,7 +121,18 @@ namespace DecentraCloud.API.Services
 
         public async Task<IEnumerable<FileRecord>> GetAllFiles(string userId)
         {
-            return await _fileRepository.GetFilesByUserId(userId);
+            var files = await _fileRepository.GetFilesByUserId(userId);
+
+            foreach (var file in files)
+            {
+                var node = await _nodeService.GetNodeById(file.NodeId);
+                if (node == null || !await _nodeService.EnsureNodeIsOnline(node.Id))
+                {
+                    continue;
+                }
+            }
+
+            return files;
         }
 
         public async Task<byte[]> ViewFile(string userId, string fileId)
@@ -133,7 +144,7 @@ namespace DecentraCloud.API.Services
             }
 
             var node = await _nodeService.GetNodeById(fileRecord.NodeId);
-            if (node == null || !node.IsOnline || string.IsNullOrEmpty(node.Endpoint))
+            if (node == null || !await _nodeService.EnsureNodeIsOnline(node.Id))
             {
                 return null;
             }
@@ -151,7 +162,7 @@ namespace DecentraCloud.API.Services
             }
 
             var node = await _nodeService.GetNodeById(fileRecord.NodeId);
-            if (node == null || !node.IsOnline || string.IsNullOrEmpty(node.Endpoint))
+            if (node == null || !await _nodeService.EnsureNodeIsOnline(node.Id))
             {
                 return null;
             }
@@ -163,11 +174,6 @@ namespace DecentraCloud.API.Services
                 Filename = fileRecord.Filename,
                 Content = decryptedContent
             };
-        }
-
-        public async Task<FileRecord> GetFile(string fileId)
-        {
-            return await _fileRepository.GetFileRecordById(fileId);
         }
 
         public async Task<IEnumerable<FileRecord>> SearchFiles(string userId, string query)
