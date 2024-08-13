@@ -33,9 +33,15 @@ namespace DecentraCloud.API.Services
         {
             // Get a random online node for the file upload
             var node = await _nodeService.GetRandomOnlineNode();
-            if (node == null || !await _nodeService.EnsureNodeIsOnline(node.Id))
+            if (node == null)
             {
-                return new FileOperationResult { Success = false, Message = "No available nodes or node is offline." };
+                return new FileOperationResult { Success = false, Message = "No available nodes." };
+            }
+
+            // Ensure the selected node is still online
+            if (!await _nodeService.EnsureNodeIsOnline(node.Id))
+            {
+                return new FileOperationResult { Success = false, Message = "Node is offline or unavailable." };
             }
 
             // Check if there is enough available storage
@@ -62,6 +68,7 @@ namespace DecentraCloud.API.Services
             // Use the generated file ID as the filename for the storage node
             var fileId = fileRecord.Id;
 
+            // Try to upload the file to the selected node
             var result = await _fileRepository.UploadFileToNode(new FileUploadDto
             {
                 UserId = fileUploadDto.UserId,
