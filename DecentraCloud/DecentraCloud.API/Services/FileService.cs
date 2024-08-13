@@ -164,6 +164,14 @@ namespace DecentraCloud.API.Services
                 return null;
             }
 
+            if (!node.IsOnline)
+            {
+                // If the node was previously offline but now online, update its status
+                node.IsOnline = true;
+                node.Uptime.Add(DateTime.UtcNow); // Record uptime without overwriting existing values
+                await _nodeService.UpdateNode(node);
+            }
+
             var encryptedContent = await _fileRepository.ViewFileOnNode(userId, fileId, node);
             return _encryptionHelper.Decrypt(encryptedContent);
         }
@@ -180,6 +188,14 @@ namespace DecentraCloud.API.Services
             if (node == null || !await _nodeService.EnsureNodeIsOnline(node.Id))
             {
                 return null;
+            }
+
+            if (!node.IsOnline)
+            {
+                // If the node was previously offline but now online, update its status
+                node.IsOnline = true;
+                node.Uptime.Add(DateTime.UtcNow); // Record uptime without overwriting existing values
+                await _nodeService.UpdateNode(node);
             }
 
             var encryptedContent = await _fileRepository.DownloadFileFromNode(userId, fileId, node);

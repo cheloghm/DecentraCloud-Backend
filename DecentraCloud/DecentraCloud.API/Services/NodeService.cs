@@ -42,7 +42,7 @@ namespace DecentraCloud.API.Services
         public async Task<bool> PingNode(string nodeId)
         {
             var node = await _nodeRepository.GetNodeById(nodeId);
-            if (node == null || string.IsNullOrEmpty(node.Endpoint) || !node.IsOnline)
+            if (node == null)
             {
                 return false;
             }
@@ -51,7 +51,32 @@ namespace DecentraCloud.API.Services
             var url = $"{node.Endpoint}/ping";
             var response = await httpClient.GetAsync(url);
 
-            return response.IsSuccessStatusCode;
+            if (response.IsSuccessStatusCode)
+            {
+                // If the node was previously offline, mark it as online and add the uptime
+                if (!node.IsOnline)
+                {
+                    node.IsOnline = true;
+                    node.Uptime.Add(DateTime.UtcNow); // Record uptime without overwriting existing values
+                }
+                await _nodeRepository.UpdateNode(node);
+                return true;
+            }
+            else
+            {
+                // If the ping fails, handle the node's downtime status
+                if (node.IsOnline)
+                {
+                    node.IsOnline = false;
+                    node.Downtime.Add(new Dictionary<string, object>
+            {
+                { "Reason", "Ping failed" },
+                { "Timestamp", DateTime.UtcNow }
+            }); // Record downtime without overwriting existing values
+                }
+                await _nodeRepository.UpdateNode(node);
+                return false;
+            }
         }
 
         public async Task<bool> EnsureNodeIsOnline(string nodeId)
@@ -64,22 +89,7 @@ namespace DecentraCloud.API.Services
                 }
             }
 
-            // Mark the node as offline if ping fails 3 times
-            var node = await _nodeRepository.GetNodeById(nodeId);
-            if (node != null)
-            {
-                node.IsOnline = false;
-                node.Endpoint = null;
-                node.Token = null;
-                node.Downtime.Add(new Dictionary<string, object>
-            {
-                { "Reason", "Ping failed 3 times" },
-                { "Timestamp", DateTime.UtcNow }
-            });
-
-                await _nodeRepository.UpdateNode(node);
-            }
-
+            // If ping fails 3 times, the node is considered offline, which is handled by PingNode
             return false;
         }
 
@@ -88,7 +98,7 @@ namespace DecentraCloud.API.Services
             var node = await _nodeRepository.GetNodeById(nodeId);
             if (node == null) return false;
 
-            node.Uptime.Add(DateTime.UtcNow);
+            node.Uptime.Add(DateTime.UtcNow); // Append uptime record
             return await _nodeRepository.UpdateNode(node);
         }
 
@@ -182,6 +192,9 @@ namespace DecentraCloud.API.Services
             node.Token = token;
             node.IsOnline = true;
             node.Endpoint = nodeLoginDto.Endpoint;
+
+            node.Uptime.Add(DateTime.UtcNow); // Record uptime without overwriting existing values
+
             await _nodeRepository.UpdateNode(node);
 
             return token;
