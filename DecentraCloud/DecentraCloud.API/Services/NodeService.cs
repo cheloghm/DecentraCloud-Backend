@@ -100,13 +100,15 @@ namespace DecentraCloud.API.Services
                 return false;
             }
 
-            node.Uptime = nodeStatusDto.Uptime;
-            node.Downtime = nodeStatusDto.Downtime;
+            node.Uptime = new List<DateTime> { DateTime.UtcNow }; // Example of how Uptime might be handled
+            node.Downtime = new List<Dictionary<string, object>>(); // Initialize as empty list, to be updated as needed
+
             node.StorageStats = new StorageStats
             {
                 UsedStorage = nodeStatusDto.StorageStats.UsedStorage,
                 AvailableStorage = nodeStatusDto.StorageStats.AvailableStorage
             };
+
             node.IsOnline = nodeStatusDto.IsOnline;
 
             return await _nodeRepository.UpdateNode(node);
@@ -140,7 +142,12 @@ namespace DecentraCloud.API.Services
                 Country = nodeRegistrationDto.Country,
                 City = nodeRegistrationDto.City,
                 Region = region,
-                Password = _encryptionHelper.HashPassword(nodeRegistrationDto.Password)
+                Password = _encryptionHelper.HashPassword(nodeRegistrationDto.Password),
+                StorageStats = new StorageStats
+                {
+                    UsedStorage = 0,
+                    AvailableStorage = nodeRegistrationDto.Storage
+                }
             };
 
             await _nodeRepository.AddNode(node);

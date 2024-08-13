@@ -31,11 +31,16 @@ namespace DecentraCloud.API.Services
 
         public async Task<FileOperationResult> UploadFile(FileUploadDto fileUploadDto)
         {
-            // Ping the node before proceeding with upload
             var node = await _nodeService.GetNodeById(fileUploadDto.NodeId);
             if (node == null || !await _nodeService.EnsureNodeIsOnline(node.Id))
             {
                 return new FileOperationResult { Success = false, Message = "Node is offline or unavailable." };
+            }
+
+            // Check if there is enough available storage
+            if (node.StorageStats.AvailableStorage < fileUploadDto.Data.Length)
+            {
+                return new FileOperationResult { Success = false, Message = "Not enough available storage on node." };
             }
 
             // Encrypt the file data before upload
@@ -66,7 +71,14 @@ namespace DecentraCloud.API.Services
 
             if (result)
             {
+                // Update user's used storage
                 await _userRepository.UpdateUserStorageUsage(fileUploadDto.UserId, fileUploadDto.Data.Length);
+
+                // Update node storage stats
+                node.StorageStats.UsedStorage += fileUploadDto.Data.Length;
+                node.StorageStats.AvailableStorage -= fileUploadDto.Data.Length;
+                await _nodeService.UpdateNode(node);
+
                 await _nodeService.UpdateNodeUptime(node.Id);
                 return new FileOperationResult { Success = true, Message = "File uploaded successfully" };
             }
@@ -85,28 +97,24 @@ namespace DecentraCloud.API.Services
                 return false;
             }
 
-            // Ping the node before attempting deletion
             var node = await _nodeService.GetNodeById(fileRecord.NodeId);
             if (node == null || !await _nodeService.EnsureNodeIsOnline(node.Id))
             {
                 return false;
             }
 
-            // Attempt to delete the file from the storage node
             var deleteSuccess = await _fileRepository.DeleteFileFromNode(userId, fileId, node);
             if (!deleteSuccess)
             {
                 return false;
             }
 
-            // Delete file record from database
             var dbDeleteSuccess = await _fileRepository.DeleteFileRecord(userId, fileRecord.Filename);
             if (!dbDeleteSuccess)
             {
                 return false;
             }
 
-            // Update user's used storage
             var user = await _userRepository.GetUserById(userId);
             if (user == null)
             {
@@ -116,8 +124,14 @@ namespace DecentraCloud.API.Services
             user.UsedStorage -= fileRecord.Size;
             await _userRepository.UpdateUser(user);
 
+            // Update node storage stats
+            node.StorageStats.UsedStorage -= fileRecord.Size;
+            node.StorageStats.AvailableStorage += fileRecord.Size;
+            await _nodeService.UpdateNode(node);
+
             return true;
         }
+
 
         public async Task<IEnumerable<FileRecord>> GetAllFiles(string userId)
         {
@@ -268,6 +282,11 @@ namespace DecentraCloud.API.Services
             }
 
             return await _fileRepository.RenameFile(fileId, newFilename);
+        }
+
+        public async Task<FileRecord> GetFile(string fileId)
+        {
+            return await _fileRepository.GetFileRecordById(fileId);
         }
 
     }

@@ -24,6 +24,7 @@ namespace DecentraCloud.API.Models
         [BsonElement("downtime")]
         public List<Dictionary<string, object>> Downtime { get; set; } = new List<Dictionary<string, object>>();
 
+        public StorageStats StorageStats { get; set; } = new StorageStats();
         public string Token { get; set; }
         public string Endpoint { get; set; }
         public string NodeName { get; set; }
@@ -33,5 +34,6 @@ namespace DecentraCloud.API.Models
         public string City { get; set; }
         public string Region { get; set; }
     }
+
 
 }
