@@ -12,19 +12,12 @@ namespace DecentraCloud.API.Models
         public string UserId { get; set; }
         public long Storage { get; set; }
 
-        [BsonElement("allocatedFileStorage")]
         public StorageStats AllocatedFileStorage { get; set; } = new StorageStats();
-
-        [BsonElement("allocatedDeploymentStorage")]
         public StorageStats AllocatedDeploymentStorage { get; set; } = new StorageStats();
 
-        [BsonElement("uptime")]
         public List<DateTime> Uptime { get; set; } = new List<DateTime>();
-
-        [BsonElement("downtime")]
         public List<Dictionary<string, object>> Downtime { get; set; } = new List<Dictionary<string, object>>();
 
-        public StorageStats StorageStats { get; set; } = new StorageStats();
         public string Token { get; set; }
         public string Endpoint { get; set; }
         public string NodeName { get; set; }
@@ -33,7 +26,16 @@ namespace DecentraCloud.API.Models
         public string Country { get; set; }
         public string City { get; set; }
         public string Region { get; set; }
-    }
 
+        [BsonElement("Availability")]
+        public Dictionary<string, object> Availability { get; set; } = new Dictionary<string, object>();
+
+        // Aggregate storage stats
+        public StorageStats StorageStats => new StorageStats
+        {
+            UsedStorage = AllocatedFileStorage.UsedStorage + AllocatedDeploymentStorage.UsedStorage,
+            AvailableStorage = Storage - (AllocatedFileStorage.UsedStorage + AllocatedDeploymentStorage.UsedStorage)
+        };
+    }
 
 }

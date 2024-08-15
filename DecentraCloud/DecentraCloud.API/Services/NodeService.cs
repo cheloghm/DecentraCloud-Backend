@@ -85,16 +85,65 @@ namespace DecentraCloud.API.Services
 
         public async Task<bool> EnsureNodeIsOnline(string nodeId)
         {
+            var node = await _nodeRepository.GetNodeById(nodeId);
+            if (node == null)
+            {
+                return false;
+            }
+
             for (int i = 0; i < 3; i++)
             {
-                if (await PingNode(nodeId))
+                var pingResult = await PingNodeWithLatency(nodeId);
+                if (pingResult.IsSuccess)
                 {
+                    NodeStatusHelper.RecordNodeAvailable(node);
+                    await _nodeRepository.UpdateNode(node);
                     return true;
+                }
+                else if (!NodeStatusHelper.CheckPingLatency(pingResult.Latency, node))
+                {
+                    await _nodeRepository.UpdateNode(node);
+                    return false;
                 }
             }
 
-            // If ping fails 3 times, the node is considered offline, which is handled by PingNode
+            // Node is considered unavailable after 3 failed pings
+            NodeStatusHelper.RecordNodeUnavailable(node);
+
+            if ((DateTime.UtcNow - (DateTime)node.Availability["Timestamp"]).TotalHours >= 1)
+            {
+                NodeStatusHelper.RecordNodeOffline(node);
+            }
+
+            await _nodeRepository.UpdateNode(node);
             return false;
+        }
+
+        private async Task<(bool IsSuccess, int Latency)> PingNodeWithLatency(string nodeId)
+        {
+            var node = await _nodeRepository.GetNodeById(nodeId);
+            if (node == null || string.IsNullOrEmpty(node.Token))
+            {
+                return (false, 0);
+            }
+
+            var httpClient = CreateHttpClient();
+            var url = $"{node.Endpoint}/storage/ping";
+
+            // Add the authorization header
+            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", node.Token);
+
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            var response = await httpClient.GetAsync(url);
+            stopwatch.Stop();
+
+            var latency = (int)stopwatch.ElapsedMilliseconds;
+
+            if (response.IsSuccessStatusCode)
+            {
+                return (true, latency);
+            }
+            return (false, latency);
         }
 
         public async Task<bool> UpdateNodeUptime(string nodeId)
@@ -117,11 +166,12 @@ namespace DecentraCloud.API.Services
             node.Uptime = new List<DateTime> { DateTime.UtcNow }; // Example of how Uptime might be handled
             node.Downtime = new List<Dictionary<string, object>>(); // Initialize as empty list, to be updated as needed
 
-            node.StorageStats = new StorageStats
-            {
-                UsedStorage = nodeStatusDto.StorageStats.UsedStorage,
-                AvailableStorage = nodeStatusDto.StorageStats.AvailableStorage
-            };
+            // Update the allocated file storage and deployment storage
+            node.AllocatedFileStorage.UsedStorage = nodeStatusDto.StorageStats.UsedStorage / 2;  // Assuming half is used for file storage
+            node.AllocatedFileStorage.AvailableStorage = node.AllocatedFileStorage.AvailableStorage - (nodeStatusDto.StorageStats.UsedStorage / 2);
+
+            node.AllocatedDeploymentStorage.UsedStorage = nodeStatusDto.StorageStats.UsedStorage / 2;  // Assuming the other half is used for deployment storage
+            node.AllocatedDeploymentStorage.AvailableStorage = node.AllocatedDeploymentStorage.AvailableStorage - (nodeStatusDto.StorageStats.UsedStorage / 2);
 
             node.IsOnline = nodeStatusDto.IsOnline;
 
@@ -168,12 +218,7 @@ namespace DecentraCloud.API.Services
                 Country = nodeRegistrationDto.Country,
                 City = nodeRegistrationDto.City,
                 Region = region,
-                Password = _encryptionHelper.HashPassword(nodeRegistrationDto.Password),
-                StorageStats = new StorageStats
-                {
-                    UsedStorage = 0,
-                    AvailableStorage = storageInBytes
-                }
+                Password = _encryptionHelper.HashPassword(nodeRegistrationDto.Password)
             };
 
             await _nodeRepository.AddNode(node);
@@ -314,5 +359,112 @@ namespace DecentraCloud.API.Services
 
             return existingNode != null;
         }
+
+        private async Task<(int CpuUsage, int MemoryUsage)> FetchNodeResourceUsage(string nodeId)
+        {
+            var node = await _nodeRepository.GetNodeById(nodeId);
+            if (node == null || string.IsNullOrEmpty(node.Endpoint) || string.IsNullOrEmpty(node.Token))
+            {
+                throw new Exception("Node not found or not properly configured.");
+            }
+
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", node.Token);
+            var response = await httpClient.GetAsync($"{node.Endpoint}/status/resource-usage");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Failed to fetch resource usage for node {nodeId}");
+            }
+
+            var resourceUsageJson = await response.Content.ReadAsStringAsync();
+            var resourceUsageData = JsonConvert.DeserializeObject<ResourceUsageDto>(resourceUsageJson);
+
+            int cpuUsage = int.Parse(resourceUsageData.CpuUsage.Replace("%", ""));
+            int memoryUsage = (int)((double.Parse(resourceUsageData.MemoryUsage.UsedMemory) / double.Parse(resourceUsageData.MemoryUsage.TotalMemory)) * 100);
+
+            return (cpuUsage, memoryUsage);
+        }
+
+        private async Task<int> FetchNodeAuthAttempts(string nodeId)
+        {
+            var node = await _nodeRepository.GetNodeById(nodeId);
+            if (node == null || string.IsNullOrEmpty(node.Endpoint) || string.IsNullOrEmpty(node.Token))
+            {
+                throw new Exception("Node not found or not properly configured.");
+            }
+
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", node.Token);
+            var response = await httpClient.GetAsync($"{node.Endpoint}/status/auth-attempts");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Failed to fetch auth attempts for node {nodeId}");
+            }
+
+            var failedAttemptsJson = await response.Content.ReadAsStringAsync();
+            var failedAttemptsData = JsonConvert.DeserializeObject<AuthAttemptsDto>(failedAttemptsJson);
+
+            return failedAttemptsData.FailedAttempts;
+        }
+
+        public async Task<bool> CheckAndHandleNodeResourceUsage(string nodeId, int cpuUsage, int memoryUsage)
+        {
+            var node = await _nodeRepository.GetNodeById(nodeId);
+            if (node == null)
+            {
+                return false;
+            }
+
+            if (!NodeStatusHelper.CheckResourceUsage(cpuUsage, memoryUsage, node))
+            {
+                await _nodeRepository.UpdateNode(node);
+                // Optionally notify the administrator
+                NotifyAdmin("High resource usage detected", node);
+                return false;
+            }
+
+            await _nodeRepository.UpdateNode(node);
+            return true;
+        }
+
+        public async Task<bool> HandleFailedAuthAttempts(string nodeId, int failedAttempts)
+        {
+            var node = await _nodeRepository.GetNodeById(nodeId);
+            if (node == null)
+            {
+                return false;
+            }
+
+            if (!NodeStatusHelper.CheckFailedAuthAttempts(failedAttempts, node))
+            {
+                await _nodeRepository.UpdateNode(node);
+                // Optionally notify the administrator
+                NotifyAdmin("Multiple failed authentication attempts", node);
+                return false;
+            }
+
+            return true;
+        }
+
+        public async Task MonitorNode(string nodeId)
+        {
+            try
+            {
+                // Fetch CPU and memory usage
+                var resourceUsage = await FetchNodeResourceUsage(nodeId);
+                await CheckAndHandleNodeResourceUsage(nodeId, resourceUsage.CpuUsage, resourceUsage.MemoryUsage);
+
+                // Fetch authentication attempts
+                var failedAttempts = await FetchNodeAuthAttempts(nodeId);
+                await HandleFailedAuthAttempts(nodeId, failedAttempts);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Monitoring failed for node {nodeId}: {ex.Message}");
+            }
+        }
+
     }
 }

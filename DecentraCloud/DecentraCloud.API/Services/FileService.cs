@@ -31,35 +31,30 @@ namespace DecentraCloud.API.Services
 
         public async Task<FileOperationResult> UploadFile(FileUploadDto fileUploadDto)
         {
-            // Get a random online node for the file upload
             var node = await _nodeService.GetRandomOnlineNode();
             if (node == null || !await _nodeService.EnsureNodeIsOnline(node.Id))
             {
                 return new FileOperationResult { Success = false, Message = "No available nodes or node is offline." };
             }
 
-            // Check if there is enough available storage (in bytes)
             if (node.AllocatedFileStorage.AvailableStorage < fileUploadDto.Data.Length)
             {
                 return new FileOperationResult { Success = false, Message = "Not enough available storage on node." };
             }
 
-            // Encrypt the file data before upload
             fileUploadDto.Data = _encryptionHelper.Encrypt(fileUploadDto.Data);
 
-            // Add file record to the database first to generate the file ID
             var fileRecord = new FileRecord
             {
                 UserId = fileUploadDto.UserId,
                 Filename = fileUploadDto.Filename,
-                NodeId = node.Id,  // Use the node ID of the selected random online node
+                NodeId = node.Id,
                 Size = fileUploadDto.Data.Length,
                 MimeType = MimeTypeHelper.GetMimeType(fileUploadDto.Filename),
                 DateAdded = DateTime.UtcNow
             };
             await _fileRepository.AddFileRecord(fileRecord);
 
-            // Use the generated file ID as the filename for the storage node
             var fileId = fileRecord.Id;
 
             var result = await _fileRepository.UploadFileToNode(new FileUploadDto
@@ -67,17 +62,19 @@ namespace DecentraCloud.API.Services
                 UserId = fileUploadDto.UserId,
                 Filename = fileId,
                 Data = fileUploadDto.Data,
-                NodeId = node.Id  // Use the node ID of the selected random online node
+                NodeId = node.Id
             }, node);
 
             if (result)
             {
-                // Update user's used storage
+                // Update user storage
                 await _userRepository.UpdateUserStorageUsage(fileUploadDto.UserId, fileUploadDto.Data.Length);
 
-                // Update node storage stats
+                // Update node storage
                 node.AllocatedFileStorage.UsedStorage += fileUploadDto.Data.Length;
                 node.AllocatedFileStorage.AvailableStorage -= fileUploadDto.Data.Length;
+
+                // The StorageStats will automatically update based on the above operations
                 await _nodeService.UpdateNode(node);
 
                 await _nodeService.UpdateNodeUptime(node.Id);
@@ -85,7 +82,6 @@ namespace DecentraCloud.API.Services
             }
             else
             {
-                // If the upload fails, delete the file record from the database
                 await _fileRepository.DeleteFileRecord(fileUploadDto.UserId, fileRecord.Filename);
                 return new FileOperationResult { Success = false, Message = "File upload failed and record deleted." };
             }
@@ -117,6 +113,7 @@ namespace DecentraCloud.API.Services
                 return false;
             }
 
+            // Update user storage
             var user = await _userRepository.GetUserById(userId);
             if (user == null)
             {
@@ -126,13 +123,15 @@ namespace DecentraCloud.API.Services
             user.UsedStorage -= fileRecord.Size;
             await _userRepository.UpdateUser(user);
 
-            // Update node storage stats
+            // Update node storage
             node.AllocatedFileStorage.UsedStorage -= fileRecord.Size;
             node.AllocatedFileStorage.AvailableStorage += fileRecord.Size;
+
             await _nodeService.UpdateNode(node);
 
             return true;
         }
+
 
         public async Task<IEnumerable<FileRecord>> GetAllFiles(string userId)
         {
