@@ -8,5 +8,8 @@ namespace DecentraCloud.API.Interfaces.RepositoryInterfaces
     {
         Task AddNotification(Notification notification);
         Task<IEnumerable<Notification>> GetNotifications();
+        Task<Notification> GetNotificationById(string id);
+        Task UpdateNotification(Notification notification);
+        Task DeleteNotification(string id);
     }
 }
