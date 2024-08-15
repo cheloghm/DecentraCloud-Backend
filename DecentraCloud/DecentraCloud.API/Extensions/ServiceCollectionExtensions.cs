@@ -32,7 +32,7 @@ namespace DecentraCloud.API.Extensions
             services.AddScoped<IFileRepository, FileRepository>();
             services.AddHostedService<NodeMonitoringService>();
             services.AddHostedService<NodePingService>();
-            services.AddSingleton<INotificationRepository, NotificationRepository>();
+            services.AddScoped<INotificationRepository, NotificationRepository>();
 
             var encryptionKey = configuration["Jwt:Key"];
             services.AddSingleton(new EncryptionHelper(encryptionKey));

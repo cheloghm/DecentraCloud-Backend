@@ -1,24 +1,29 @@
 ﻿using DecentraCloud.API.Interfaces.ServiceInterfaces;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DecentraCloud.API.Services.Background_Services
 {
     public class NodePingService : BackgroundService
     {
-        private readonly INodeService _nodeService;
+        private readonly IServiceProvider _serviceProvider;
 
-        public NodePingService(INodeService nodeService)
+        public NodePingService(IServiceProvider serviceProvider)
         {
-            _nodeService = nodeService;
+            _serviceProvider = serviceProvider;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                var nodes = await _nodeService.GetAllNodes();
-                foreach (var node in nodes)
+                using (var scope = _serviceProvider.CreateScope())
                 {
-                    await _nodeService.EnsureNodeIsOnline(node.Id);
+                    var nodeService = scope.ServiceProvider.GetRequiredService<INodeService>();
+                    var nodes = await nodeService.GetAllNodes();
+                    foreach (var node in nodes)
+                    {
+                        await nodeService.EnsureNodeIsOnline(node.Id);
+                    }
                 }
 
                 // Wait for a certain period before the next ping round

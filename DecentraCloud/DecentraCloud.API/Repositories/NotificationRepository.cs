@@ -1,4 +1,5 @@
-﻿using DecentraCloud.API.Interfaces.RepositoryInterfaces;
+﻿using DecentraCloud.API.Data;
+using DecentraCloud.API.Interfaces.RepositoryInterfaces;
 using DecentraCloud.API.Models;
 using MongoDB.Driver;
 using System.Collections.Generic;
@@ -10,9 +11,9 @@ namespace DecentraCloud.API.Repositories
     {
         private readonly IMongoCollection<Notification> _notifications;
 
-        public NotificationRepository(IMongoDatabase database)
+        public NotificationRepository(DecentraCloudContext context)
         {
-            _notifications = database.GetCollection<Notification>("Notifications");
+            _notifications = context.Notifications;
         }
 
         public async Task AddNotification(Notification notification)
