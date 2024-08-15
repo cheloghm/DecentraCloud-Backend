@@ -5,6 +5,7 @@ using DecentraCloud.API.Interfaces.RepositoryInterfaces;
 using DecentraCloud.API.Interfaces.ServiceInterfaces;
 using DecentraCloud.API.Repositories;
 using DecentraCloud.API.Services;
+using DecentraCloud.API.Services.Background_Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Configuration;
@@ -29,6 +30,9 @@ namespace DecentraCloud.API.Extensions
             services.AddScoped<INodeRepository, NodeRepository>();
             services.AddScoped<IFileService, FileService>();
             services.AddScoped<IFileRepository, FileRepository>();
+            services.AddHostedService<NodeMonitoringService>();
+            services.AddHostedService<NodePingService>();
+            services.AddSingleton<INotificationRepository, NotificationRepository>();
 
             var encryptionKey = configuration["Jwt:Key"];
             services.AddSingleton(new EncryptionHelper(encryptionKey));

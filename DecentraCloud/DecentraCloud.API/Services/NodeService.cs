@@ -3,6 +3,7 @@ using DecentraCloud.API.Helpers;
 using DecentraCloud.API.Interfaces.RepositoryInterfaces;
 using DecentraCloud.API.Interfaces.ServiceInterfaces;
 using DecentraCloud.API.Models;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,13 +18,15 @@ namespace DecentraCloud.API.Services
         private readonly IUserRepository _userRepository;
         private readonly TokenHelper _tokenHelper;
         private readonly EncryptionHelper _encryptionHelper;
+        private readonly INotificationRepository _notificationRepository;
 
-        public NodeService(INodeRepository nodeRepository, IUserRepository userRepository, TokenHelper tokenHelper, EncryptionHelper encryptionHelper)
+        public NodeService(INodeRepository nodeRepository, IUserRepository userRepository, TokenHelper tokenHelper, EncryptionHelper encryptionHelper, INotificationRepository notificationRepository)
         {
             _nodeRepository = nodeRepository;
             _userRepository = userRepository;
             _tokenHelper = tokenHelper;
             _encryptionHelper = encryptionHelper;
+            _notificationRepository = notificationRepository;
         }
 
         private HttpClient CreateHttpClient()
@@ -37,6 +40,18 @@ namespace DecentraCloud.API.Services
             {
                 Timeout = TimeSpan.FromMinutes(10) // Set a longer timeout
             };
+        }
+
+        private async Task NotifyAdmin(string message, Node node)
+        {
+            var notification = new Notification
+            {
+                Message = message,
+                NodeId = node.Id,
+                Timestamp = DateTime.UtcNow
+            };
+
+            await _notificationRepository.AddNotification(notification);
         }
 
         public async Task<bool> PingNode(string nodeId)
@@ -420,8 +435,7 @@ namespace DecentraCloud.API.Services
             if (!NodeStatusHelper.CheckResourceUsage(cpuUsage, memoryUsage, node))
             {
                 await _nodeRepository.UpdateNode(node);
-                // Optionally notify the administrator
-                NotifyAdmin("High resource usage detected", node);
+                await NotifyAdmin("High resource usage detected", node);
                 return false;
             }
 
@@ -440,8 +454,7 @@ namespace DecentraCloud.API.Services
             if (!NodeStatusHelper.CheckFailedAuthAttempts(failedAttempts, node))
             {
                 await _nodeRepository.UpdateNode(node);
-                // Optionally notify the administrator
-                NotifyAdmin("Multiple failed authentication attempts", node);
+                await NotifyAdmin("Multiple failed authentication attempts", node);
                 return false;
             }
 

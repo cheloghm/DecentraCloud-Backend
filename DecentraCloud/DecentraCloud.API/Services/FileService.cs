@@ -132,7 +132,6 @@ namespace DecentraCloud.API.Services
             return true;
         }
 
-
         public async Task<IEnumerable<FileRecord>> GetAllFiles(string userId)
         {
             var files = await _fileRepository.GetFilesByUserId(userId);
