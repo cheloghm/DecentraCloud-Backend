@@ -351,19 +351,24 @@ namespace DecentraCloud.API.Services
             return await _nodeRepository.GetNodeById(nodeId);
         }
 
-        public async Task<NodeStatusDto> GetNodeStatus(string nodeId, string userId)
+        public async Task<NodeStatusDto> GetNodeStatus(string nodeId, int start = 0, int count = 5)
         {
             var node = await _nodeRepository.GetNodeById(nodeId);
-            if (node == null || node.UserId != userId)
+            if (node == null)
             {
                 return null;
             }
 
-            return new NodeStatusDto
+            // Apply pagination to Uptime and Downtime
+            var paginatedUptime = node.Uptime.Skip(start).Take(count).ToList();
+            var paginatedDowntime = node.Downtime.Skip(start).Take(count).ToList();
+
+            // Map to NodeStatusDto
+            var nodeStatusDto = new NodeStatusDto
             {
                 NodeId = node.Id,
-                Uptime = node.Uptime,
-                Downtime = node.Downtime,
+                Uptime = paginatedUptime,
+                Downtime = paginatedDowntime,
                 StorageStats = new StorageStatsDto
                 {
                     UsedStorage = node.StorageStats.UsedStorage,
@@ -375,6 +380,8 @@ namespace DecentraCloud.API.Services
                 Endpoint = node.Endpoint,
                 Region = node.Region
             };
+
+            return nodeStatusDto;
         }
 
         public async Task<bool> UpdateNode(Node node)

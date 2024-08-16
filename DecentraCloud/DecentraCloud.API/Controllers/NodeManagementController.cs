@@ -21,12 +21,12 @@ namespace DecentraCloud.API.Controllers
         }
 
         [HttpGet("node/{nodeId}")]
-        public async Task<IActionResult> GetNodeById(string nodeId)
+        public async Task<IActionResult> GetNodeById(string nodeId, [FromQuery] int start = 0, [FromQuery] int count = 5)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var nodeStatus = await _nodeService.GetNodeStatus(nodeId, userId);
+            var nodeStatus = await _nodeService.GetNodeStatus(nodeId, start, count);
 
-            if (nodeStatus == null)
+            if (nodeStatus == null || nodeStatus.NodeId != nodeId)
             {
                 return NotFound(new { message = "Node not found or access denied." });
             }
