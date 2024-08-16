@@ -8,7 +8,7 @@ namespace DecentraCloud.API.Interfaces.ServiceInterfaces
     public interface IFileService
     {
         Task<FileOperationResult> UploadFile(FileUploadDto fileUploadDto);
-        Task<IEnumerable<FileRecord>> GetAllFiles(string userId);
+        Task<IEnumerable<FileRecord>> GetAllFiles(string userId, int pageNumber, int pageSize);
         Task<byte[]> ViewFile(string userId, string fileId);
         Task<FileContentDto> DownloadFile(string userId, string fileId);
         Task<FileRecord> GetFile(string fileId);

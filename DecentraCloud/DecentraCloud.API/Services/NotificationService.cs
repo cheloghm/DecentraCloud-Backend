@@ -13,9 +13,12 @@ namespace DecentraCloud.API.Services
             _notificationRepository = notificationRepository;
         }
 
-        public async Task<IEnumerable<Notification>> GetNotifications()
+        public async Task<IEnumerable<Notification>> GetNotifications(int pageNumber, int pageSize)
         {
-            return await _notificationRepository.GetNotifications();
+            var notifications = await _notificationRepository.GetNotifications();
+
+            // Apply pagination
+            return notifications.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
         }
 
         public async Task<Notification> GetNotificationById(string id)

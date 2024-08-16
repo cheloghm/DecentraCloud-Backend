@@ -132,11 +132,14 @@ namespace DecentraCloud.API.Services
             return true;
         }
 
-        public async Task<IEnumerable<FileRecord>> GetAllFiles(string userId)
+        public async Task<IEnumerable<FileRecord>> GetAllFiles(string userId, int pageNumber, int pageSize)
         {
             var files = await _fileRepository.GetFilesByUserId(userId);
 
-            foreach (var file in files)
+            // Apply pagination
+            var paginatedFiles = files.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            foreach (var file in paginatedFiles)
             {
                 var node = await _nodeService.GetNodeById(file.NodeId);
                 if (node == null || !await _nodeService.EnsureNodeIsOnline(node.Id))
@@ -145,7 +148,7 @@ namespace DecentraCloud.API.Services
                 }
             }
 
-            return files;
+            return paginatedFiles;
         }
 
         public async Task<byte[]> ViewFile(string userId, string fileId)

@@ -63,7 +63,7 @@ namespace DecentraCloud.API.Controllers
         }
 
         [HttpGet("all")]
-        public async Task<IActionResult> GetAllFiles()
+        public async Task<IActionResult> GetAllFiles(int pageNumber = 1, int pageSize = 20)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -72,7 +72,7 @@ namespace DecentraCloud.API.Controllers
                 return Unauthorized(new { message = "User ID not found." });
             }
 
-            var files = await _fileService.GetAllFiles(userId);
+            var files = await _fileService.GetAllFiles(userId, pageNumber, pageSize);
             return Ok(files);
         }
 

@@ -15,11 +15,11 @@ public class AdminNotificationsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetNotifications()
+    public async Task<IActionResult> GetNotifications(int pageNumber = 1, int pageSize = 20)
     {
         try
         {
-            var notifications = await _notificationService.GetNotifications();
+            var notifications = await _notificationService.GetNotifications(pageNumber, pageSize);
             return Ok(notifications);
         }
         catch (Exception ex)

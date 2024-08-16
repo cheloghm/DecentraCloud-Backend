@@ -351,7 +351,7 @@ namespace DecentraCloud.API.Services
             return await _nodeRepository.GetNodeById(nodeId);
         }
 
-        public async Task<NodeStatusDto> GetNodeStatus(string nodeId, int start = 0, int count = 5)
+        public async Task<NodeStatusDto> GetNodeStatus(string nodeId, int start, int count)
         {
             var node = await _nodeRepository.GetNodeById(nodeId);
             if (node == null)
