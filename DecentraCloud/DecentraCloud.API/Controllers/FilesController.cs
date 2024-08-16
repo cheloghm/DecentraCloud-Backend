@@ -180,7 +180,7 @@ namespace DecentraCloud.API.Controllers
         }
 
         [HttpGet("shared-with-me")]
-        public async Task<IActionResult> GetFilesSharedWithMe()
+        public async Task<IActionResult> GetFilesSharedWithMe(int pageNumber = 1, int pageSize = 20)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null)
@@ -188,7 +188,7 @@ namespace DecentraCloud.API.Controllers
                 return Unauthorized(new { message = "User ID not found." });
             }
 
-            var files = await _fileService.GetFilesSharedWithUser(userId);
+            var files = await _fileService.GetFilesSharedWithUser(userId, pageNumber, pageSize);
             return Ok(files);
         }
 

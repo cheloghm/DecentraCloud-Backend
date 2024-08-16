@@ -341,9 +341,15 @@ namespace DecentraCloud.API.Services
             });
         }
 
-        public async Task<IEnumerable<Node>> GetNodesByUser(string userId)
+        public async Task<IEnumerable<Node>> GetNodesByUser(string userId, int pageNumber, int pageSize)
         {
-            return await _nodeRepository.GetNodesByUser(userId);
+            var nodes = await _nodeRepository.GetNodesByUser(userId);
+
+            // Reverse the order for LIFO and apply pagination
+            return nodes.OrderByDescending(n => n.Id) // Assuming nodes are ordered by creation ID
+                        .Skip((pageNumber - 1) * pageSize)
+                        .Take(pageSize)
+                        .ToList();
         }
 
         public async Task<Node> GetNodeById(string nodeId)

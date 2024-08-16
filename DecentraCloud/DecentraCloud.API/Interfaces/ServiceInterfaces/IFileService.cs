@@ -15,7 +15,7 @@ namespace DecentraCloud.API.Interfaces.ServiceInterfaces
         Task<IEnumerable<FileRecord>> SearchFiles(string userId, string query);
         Task<bool> DeleteFile(string userId, string fileId);
         Task<bool> ShareFile(string fileId, string emailToShareWith);
-        Task<IEnumerable<FileRecord>> GetFilesSharedWithUser(string userId);
+        Task<IEnumerable<FileRecord>> GetFilesSharedWithUser(string userId, int pageNumber, int pageSize);
         Task<FileRecordDto> GetFileDetails(string fileId, string userId);
         Task<bool> IsFileOwner(string userId, string fileId);
         Task<bool> RevokeShare(string fileId, string userEmail);

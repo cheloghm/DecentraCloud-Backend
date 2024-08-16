@@ -88,10 +88,10 @@ namespace DecentraCloud.API.Controllers
 
         [HttpGet("all")]
         [Authorize]
-        public async Task<IActionResult> GetAllNodes()
+        public async Task<IActionResult> GetAllNodes(int pageNumber = 1, int pageSize = 20)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var nodes = await _nodeService.GetNodesByUser(userId);
+            var nodes = await _nodeService.GetNodesByUser(userId, pageNumber, pageSize);
             return Ok(nodes);
         }
 

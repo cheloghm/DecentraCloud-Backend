@@ -13,7 +13,7 @@ namespace DecentraCloud.API.Interfaces.ServiceInterfaces
         Task<long> GetFileSize(string nodeId, string filename);
         Task<bool> UploadFileToNode(FileUploadDto fileUploadDto);
         Task<IEnumerable<NodeDto>> GetAllNodes();
-        Task<IEnumerable<Node>> GetNodesByUser(string userId);
+        Task<IEnumerable<Node>> GetNodesByUser(string userId, int pageNumber, int pageSize);
         Task<Node> GetNodeById(string nodeId);
         Task<bool> UpdateNode(Node node);
         Task<bool> DeleteNode(string nodeId);

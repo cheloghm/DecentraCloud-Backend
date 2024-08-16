@@ -17,8 +17,11 @@ namespace DecentraCloud.API.Services
         {
             var notifications = await _notificationRepository.GetNotifications();
 
-            // Apply pagination
-            return notifications.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+            // Reverse the order for LIFO and apply pagination
+            return notifications.OrderByDescending(n => n.Timestamp)
+                                .Skip((pageNumber - 1) * pageSize)
+                                .Take(pageSize)
+                                .ToList();
         }
 
         public async Task<Notification> GetNotificationById(string id)

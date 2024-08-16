@@ -136,8 +136,11 @@ namespace DecentraCloud.API.Services
         {
             var files = await _fileRepository.GetFilesByUserId(userId);
 
-            // Apply pagination
-            var paginatedFiles = files.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+            // Reverse the order for LIFO and apply pagination
+            var paginatedFiles = files.OrderByDescending(f => f.DateAdded)
+                                      .Skip((pageNumber - 1) * pageSize)
+                                      .Take(pageSize)
+                                      .ToList();
 
             foreach (var file in paginatedFiles)
             {
@@ -258,9 +261,15 @@ namespace DecentraCloud.API.Services
             return await _fileRepository.ShareFileWithUser(fileId, user.Id);
         }
 
-        public async Task<IEnumerable<FileRecord>> GetFilesSharedWithUser(string userId)
+        public async Task<IEnumerable<FileRecord>> GetFilesSharedWithUser(string userId, int pageNumber, int pageSize)
         {
-            return await _fileRepository.GetFilesSharedWithUser(userId);
+            var files = await _fileRepository.GetFilesSharedWithUser(userId);
+
+            // Reverse the order for LIFO and apply pagination
+            return files.OrderByDescending(f => f.DateAdded)
+                        .Skip((pageNumber - 1) * pageSize)
+                        .Take(pageSize)
+                        .ToList();
         }
 
         public async Task<bool> RevokeShare(string fileId, string userEmail)
