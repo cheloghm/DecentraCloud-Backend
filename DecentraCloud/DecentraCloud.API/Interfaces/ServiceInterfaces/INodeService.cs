@@ -23,6 +23,7 @@ namespace DecentraCloud.API.Interfaces.ServiceInterfaces
         Task<bool> UpdateNodeUptime(string nodeId);
         Task<bool> VerifyNode(string userEmail, string nodeName);
         Task MonitorNode(string nodeId);
+        Task<NodeStatusDto> GetNodeStatus(string nodeId, string userId);
 
     }
 }

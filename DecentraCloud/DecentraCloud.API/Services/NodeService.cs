@@ -351,6 +351,32 @@ namespace DecentraCloud.API.Services
             return await _nodeRepository.GetNodeById(nodeId);
         }
 
+        public async Task<NodeStatusDto> GetNodeStatus(string nodeId, string userId)
+        {
+            var node = await _nodeRepository.GetNodeById(nodeId);
+            if (node == null || node.UserId != userId)
+            {
+                return null;
+            }
+
+            return new NodeStatusDto
+            {
+                NodeId = node.Id,
+                Uptime = node.Uptime,
+                Downtime = node.Downtime,
+                StorageStats = new StorageStatsDto
+                {
+                    UsedStorage = node.StorageStats.UsedStorage,
+                    AvailableStorage = node.StorageStats.AvailableStorage
+                },
+                IsOnline = node.IsOnline,
+                Availability = node.Availability,
+                NodeName = node.NodeName,
+                Endpoint = node.Endpoint,
+                Region = node.Region
+            };
+        }
+
         public async Task<bool> UpdateNode(Node node)
         {
             return await _nodeRepository.UpdateNode(node);

@@ -74,6 +74,28 @@ namespace DecentraCloud.API.Services
         {
             return await _userRepository.GetUserById(userId);
         }
+        public async Task<UserDetailsDto> GetUserDetails(string userId)
+        {
+            var user = await _userRepository.GetUserById(userId);
+            if (user == null) return null;
+
+            return new UserDetailsDto
+            {
+                Username = user.Username ?? "No Name",
+                Email = user.Email,
+                Settings = user.Settings != null ? new UserSettingsDto
+                {
+                    ReceiveNewsletter = user.Settings.ReceiveNewsletter,
+                    Theme = user.Settings.Theme
+                } : new UserSettingsDto
+                {
+                    ReceiveNewsletter = false,
+                    Theme = "light"
+                },
+                AllocatedStorage = user.AllocatedStorage,
+                UsedStorage = user.UsedStorage
+            };
+        }
 
         public async Task<User> UpdateUser(UserDetailsDto userDto, string userId)
         {

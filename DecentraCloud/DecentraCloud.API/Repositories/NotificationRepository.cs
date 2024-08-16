@@ -31,14 +31,17 @@ namespace DecentraCloud.API.Repositories
             return await _context.Notifications.Find(n => n.Id == id).FirstOrDefaultAsync();
         }
 
-        public async Task UpdateNotification(Notification notification)
+        public async Task<bool> UpdateNotification(Notification notification)
         {
-            await _context.Notifications.ReplaceOneAsync(n => n.Id == notification.Id, notification);
+            var result = await _context.Notifications.ReplaceOneAsync(n => n.Id == notification.Id, notification);
+            return result.IsAcknowledged && result.ModifiedCount > 0;
         }
 
-        public async Task DeleteNotification(string id)
+        public async Task<bool> DeleteNotification(string id)
         {
-            await _context.Notifications.DeleteOneAsync(n => n.Id == id);
+            var result = await _context.Notifications.DeleteOneAsync(n => n.Id == id);
+            return result.IsAcknowledged && result.DeletedCount > 0;
         }
     }
+
 }

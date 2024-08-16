@@ -1,87 +1,88 @@
-﻿using DecentraCloud.API.Interfaces.RepositoryInterfaces;
-using DecentraCloud.API.Models;
+﻿using DecentraCloud.API.Interfaces.ServiceInterfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
-namespace DecentraCloud.API.Controllers
+[Route("api/[controller]")]
+[ApiController]
+[Authorize(Roles = "Admin")]
+public class AdminNotificationsController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    [Authorize(Roles = "Admin")]
-    public class AdminNotificationsController : ControllerBase
+    private readonly INotificationService _notificationService;
+
+    public AdminNotificationsController(INotificationService notificationService)
     {
-        private readonly INotificationRepository _notificationRepository;
+        _notificationService = notificationService;
+    }
 
-        public AdminNotificationsController(INotificationRepository notificationRepository)
+    [HttpGet]
+    public async Task<IActionResult> GetNotifications()
+    {
+        try
         {
-            _notificationRepository = notificationRepository;
+            var notifications = await _notificationService.GetNotifications();
+            return Ok(notifications);
         }
-
-        [HttpGet]
-        public async Task<IActionResult> GetNotifications()
+        catch (Exception ex)
         {
-            try
-            {
-                var notifications = await _notificationRepository.GetNotifications();
-                return Ok(notifications);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
+            return StatusCode(500, $"Internal server error: {ex.Message}");
         }
+    }
 
-        [HttpPut("resolve/{id}")]
-        public async Task<IActionResult> MarkAsResolved(string id)
+    [HttpPut("resolve/{id}")]
+    public async Task<IActionResult> MarkAsResolved(string id)
+    {
+        try
         {
-            try
+            var notification = await _notificationService.GetNotificationById(id);
+            if (notification == null)
             {
-                var notification = await _notificationRepository.GetNotificationById(id);
-                if (notification == null)
-                {
-                    return NotFound("Notification not found.");
-                }
-
-                if (notification.IsResolved)
-                {
-                    return BadRequest("Notification is already resolved.");
-                }
-
-                notification.IsResolved = true;
-                notification.ResolvedAt = DateTime.UtcNow;
-
-                await _notificationRepository.UpdateNotification(notification);
-
-                return Ok(new { message = "Notification marked as resolved." });
+                return NotFound("Notification not found.");
             }
-            catch (Exception ex)
+
+            if (notification.IsResolved)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return BadRequest("Notification is already resolved.");
             }
+
+            notification.IsResolved = true;
+            notification.ResolvedAt = DateTime.UtcNow;
+
+            var success = await _notificationService.UpdateNotification(notification);
+            if (!success)
+            {
+                return StatusCode(500, "Failed to update notification.");
+            }
+
+            return Ok(new { message = "Notification marked as resolved." });
         }
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteNotification(string id)
+        catch (Exception ex)
         {
-            try
-            {
-                var notification = await _notificationRepository.GetNotificationById(id);
-                if (notification == null)
-                {
-                    return NotFound("Notification not found.");
-                }
+            return StatusCode(500, $"Internal server error: {ex.Message}");
+        }
+    }
 
-                await _notificationRepository.DeleteNotification(id);
-
-                return Ok(new { message = "Notification deleted." });
-            }
-            catch (Exception ex)
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteNotification(string id)
+    {
+        try
+        {
+            var notification = await _notificationService.GetNotificationById(id);
+            if (notification == null)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return NotFound("Notification not found.");
             }
+
+            var success = await _notificationService.DeleteNotification(id);
+            if (!success)
+            {
+                return StatusCode(500, "Failed to delete notification.");
+            }
+
+            return Ok(new { message = "Notification deleted." });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Internal server error: {ex.Message}");
         }
     }
 }

@@ -70,28 +70,12 @@ namespace DecentraCloud.API.Controllers
         public async Task<IActionResult> GetUserDetails()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var user = await _userService.GetUserById(userId);
-            if (user == null) return NotFound();
+            var userDetails = await _userService.GetUserDetails(userId);
+            if (userDetails == null) return NotFound();
 
-            var userDetailsDto = new UserDetailsDto
-            {
-                Username = user.Username ?? "No Name", // Default to "No Name" if null
-                Email = user.Email,
-                Settings = user.Settings != null ? new UserSettingsDto
-                {
-                    ReceiveNewsletter = user.Settings.ReceiveNewsletter,
-                    Theme = user.Settings.Theme
-                } : new UserSettingsDto
-                {
-                    ReceiveNewsletter = false, // Default value
-                    Theme = "light" // Default value
-                },
-                AllocatedStorage = user.AllocatedStorage,
-                UsedStorage = user.UsedStorage
-            };
-
-            return Ok(userDetailsDto);
+            return Ok(userDetails);
         }
+
 
         [HttpPut]
         [Authorize]
