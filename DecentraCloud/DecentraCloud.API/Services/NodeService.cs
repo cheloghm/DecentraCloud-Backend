@@ -356,23 +356,28 @@ namespace DecentraCloud.API.Services
             var node = await _nodeRepository.GetNodeById(nodeId);
             if (node == null)
             {
-                return null;
+                return null; // Handle null case as needed
             }
 
-            // Apply pagination to Uptime and Downtime
-            var paginatedUptime = node.Uptime.Skip(start).Take(count).ToList();
-            var paginatedDowntime = node.Downtime.Skip(start).Take(count).ToList();
-
-            // Map to NodeStatusDto
             var nodeStatusDto = new NodeStatusDto
             {
                 NodeId = node.Id,
-                Uptime = paginatedUptime,
-                Downtime = paginatedDowntime,
+                Uptime = node.Uptime.Skip(start).Take(count).ToList(),
+                Downtime = node.Downtime.Skip(start).Take(count).ToList(),
                 StorageStats = new StorageStatsDto
                 {
                     UsedStorage = node.StorageStats.UsedStorage,
                     AvailableStorage = node.StorageStats.AvailableStorage
+                },
+                AllocatedFileStorage = new StorageStatsDto
+                {
+                    UsedStorage = node.AllocatedFileStorage.UsedStorage,
+                    AvailableStorage = node.AllocatedFileStorage.AvailableStorage
+                },
+                AllocatedDeploymentStorage = new StorageStatsDto
+                {
+                    UsedStorage = node.AllocatedDeploymentStorage.UsedStorage,
+                    AvailableStorage = node.AllocatedDeploymentStorage.AvailableStorage
                 },
                 IsOnline = node.IsOnline,
                 Availability = node.Availability,
