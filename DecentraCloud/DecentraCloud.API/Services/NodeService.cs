@@ -368,8 +368,11 @@ namespace DecentraCloud.API.Services
             var nodeStatusDto = new NodeStatusDto
             {
                 NodeId = node.Id,
-                Uptime = node.Uptime.Skip(start).Take(count).ToList(),
-                Downtime = node.Downtime.Skip(start).Take(count).ToList(),
+
+                // Reverse the order for LIFO, then apply pagination
+                Uptime = node.Uptime.OrderByDescending(u => u).Skip(start).Take(count).ToList(),
+                Downtime = node.Downtime.OrderByDescending(d => d["Timestamp"]).Skip(start).Take(count).ToList(),
+
                 StorageStats = new StorageStatsDto
                 {
                     UsedStorage = node.StorageStats.UsedStorage,
